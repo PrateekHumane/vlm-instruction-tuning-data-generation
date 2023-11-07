@@ -1,0 +1,8 @@
+A man holding a frisbee while standing on a beach.
+A man passing a frisbee underneath his leg.
+A person passing a frisbee between their legs.
+A man throws a Frisbee under his leg.\na close up of a person playing with a frisbee
+
+person: [0.276, 0.312, 0.904, 0.984]
+frisbee: [0.398, 0.699, 0.607, 0.812]
+person: [0.934, 0.65, 0.966, 0.682]
