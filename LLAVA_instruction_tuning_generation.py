@@ -26,6 +26,7 @@ text_generator = TextGenerator(model=Models.MISTRAL, api_type=APITypes.INFERENCE
 # response_types = [ResponseTypes.COMPLEX_REASONING, ResponseTypes.CONVERSATION, ResponseTypes.DETAIL_DESCRIPTION ]
 response_types = [ResponseTypes.COMPLEX_REASONING]
 
+image_ids = [215677, 296754]
 for image_id in image_ids:
     img_info = coco_instances.loadImgs(image_id)[0]
     img_width = img_info['width']
@@ -54,12 +55,14 @@ for image_id in image_ids:
 
     parsed_responses = {'image_id':image_id}
     for response_type in response_types:
+        # TODO: pass both the captions and the bboxs to the text generator
         if response_type == ResponseTypes.CONVERSATION:
             query = captions
         else:
             query = captions + '\n\n' + bboxs
 
-        generated_text, finish_reason = text_generator.generate(query, response_type)
+        # generated_text, finish_reason = text_generator.generate(query, response_type)
+        generated_text, finish_reason = text_generator.generate_complex_reasoning_pruned(query)
 
         with open(f"datasets/Mistral/raw/{response_type.value}.json", "a") as jf:
             json.dump({image_id: generated_text}, jf, indent=2)
@@ -85,3 +88,5 @@ for image_id in image_ids:
     print(parsed_responses)
     if len(parsed_responses) > 1:
         with open("datasets/Mistral/json/all_responses.json", "a") as jf:
+            json.dump(parsed_responses, jf, indent=2)
+            jf.write(',\n')

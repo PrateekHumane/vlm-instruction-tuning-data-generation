@@ -46,7 +46,7 @@ print(repr(query_message))
 output = query({
     "inputs": query_message,
     # "parameters":{"return_full_text":False, "max_new_tokens":250},
-    "parameters":{"return_full_text":False, "temperature": 0.7, "max_new_tokens":50},
+    "parameters":{"return_full_text":True, "temperature": 0.7, "max_new_tokens":50},
     "options":{"use_cache":False}
 })
 

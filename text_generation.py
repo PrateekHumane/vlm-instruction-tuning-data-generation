@@ -21,20 +21,6 @@ models_with_system_messages = {Models.LLAMA}
 APITypes = Enum("APITypes", ["INFERENCE_API", "INFERENCE_ENDPOINT"])
 
 
-def get_api_url_and_token(model, api_type):
-    if api_type == APITypes.INFERENCE_API:
-        return model.value, API_TOKEN
-    else:
-        return INFERENCE_ENDPOINT_URL[model], ENDPOINT_API_TOKEN
-
-
-
-# def get_api_url(model):
-#     if model == Models.MISTRAL:
-#         return "https://c1662ic0eolol8br.us-east-1.aws.endpoints.huggingface.cloud"
-#     else:
-#         return None
-
 class ResponseTypes(Enum):
     COMPLEX_REASONING = 'complex_reasoning'
     CONVERSATION = 'conversation'
@@ -44,15 +30,19 @@ class ResponseTypes(Enum):
 
 # get the corresponding number of samples for the given response type
 response_n_shot = {ResponseTypes.COMPLEX_REASONING: 4, ResponseTypes.CONVERSATION: 2,
-                   ResponseTypes.DETAIL_DESCRIPTION: 3}
+                   ResponseTypes.DETAIL_DESCRIPTION: 3, ResponseTypes.COMPLEX_REASONING_PRUNING: 1}
 
 
 class TextGenerator():
     def __init__(self, model, api_type, max_new_tokens=500):
         self.model = model
         self.tokenizer = AutoTokenizer.from_pretrained(model.value, token=API_TOKEN)
-        model_url, model_token = get_api_url_and_token(model, api_type)
-        self.client = InferenceClient(model=model_url, token=model_token)
+        if api_type == APITypes.INFERENCE_API:
+            self.model_url, self.model_token = model.value, API_TOKEN
+        else:
+            self.model_url, self.model_token = INFERENCE_ENDPOINT_URL[model], ENDPOINT_API_TOKEN
+
+        self.client = InferenceClient(model=self.model_url, token=self.model_token)
 
         self.max_new_tokens = max_new_tokens
 
@@ -76,28 +66,60 @@ class TextGenerator():
 
             self.base_messages[response_type] = messages
 
-    def query(payload):
-        response = requests.post(MISTRAL_API_URL, headers=headers, json=payload)
+    def http_query_api(self, payload):
+        api_url = f"https://api-inference.huggingface.co/models/{self.model_url}"
+        response = requests.post(api_url, headers={"Authorization": f"Bearer {self.model_token}"}, json=payload)
         return response.json()
 
     def generate(self, query, response_type):
 
-        query_message = self.tokenizer.apply_chat_template(self.base_messages[response_type] + [{"role": "user", "content": query}], tokenize=False)
+        query_message = self.tokenizer.apply_chat_template(
+            self.base_messages[response_type] + [{"role": "user", "content": query}], tokenize=False)
 
         output = self.client.text_generation(query_message, max_new_tokens=self.max_new_tokens, details=True)
 
         return output.generated_text, output.details.finish_reason
 
-    def generate_complex_reasoning(self, query):
-        query_message = self.tokenizer.apply_chat_template(self.base_messages[ResponseTypes.COMPLEX_REASONING_PRUNING] + [{"role": "user", "content": query}], tokenize=False)
+    def generate_complex_reasoning_pruned(self, query):
+        query_message = self.tokenizer.apply_chat_template(
+            self.base_messages[ResponseTypes.COMPLEX_REASONING] + [{"role": "user", "content": query}],
+            tokenize=False)
+
         potential_questions = []
         for i in range(5):
-            output = self.client.text_generation(query_message, temperature=0.7, max_new_tokens=50, details=True)
+            output = self.http_query_api({
+                "inputs": query_message,
+                "parameters": {"return_full_text": False, "temperature": 0.7, "max_new_tokens": 50},
+                "options": {"use_cache": False}
+            })[0]['generated_text']
 
-            print(output.generated_text)
+            print(output)
 
-            qa = parse_responses.parse_conversation(output.generated_text)
-            if qa:
-                potential_questions.append(qa['Question'])
+            qa = parse_responses.parse_conversation(output)
+            if len(qa) > 0:
+                potential_questions.append(qa[0]['Question'])
 
-        for question in potential_questions:
+        # TODO: ensure there is at least 1 question generated and parsed
+        query_questions = [f"{i}. {question}" for i, question in enumerate(potential_questions,1)]
+        query2 = query + '\n\n' + '\n'.join(query_questions)
+
+        query2_message = self.tokenizer.apply_chat_template(
+            self.base_messages[ResponseTypes.COMPLEX_REASONING_PRUNING] + [{"role": "user", "content": query2}],
+            tokenize=False)
+        output = self.client.text_generation(query2_message, max_new_tokens=self.max_new_tokens, details=True)
+
+        # TODO: return proper errors
+        if not output.generated_text.isnumeric():
+            print(f'failed w output: {output}')
+            return None
+
+        best_question_num = int(output.generated_text) - 1
+        # TODO: return proper errors
+        if not 0 <= best_question_num < len(potential_questions):
+            print(f'failed w range: {output}')
+            return None
+
+
+        output = self.client.text_generation(query_message+' Question:\n'+potential_questions[best_question_num], max_new_tokens=self.max_new_tokens, details=True)
+
+        return 'Question:\n'+potential_questions[best_question_num]+output.generated_text, output.details.finish_reason
