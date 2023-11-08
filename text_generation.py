@@ -1,3 +1,5 @@
+import math
+
 from huggingface_hub import InferenceClient
 from huggingface_hub.inference._text_generation import FinishReason
 from transformers import AutoTokenizer
@@ -30,7 +32,7 @@ class ResponseTypes(Enum):
 
 # get the corresponding number of samples for the given response type
 response_n_shot = {ResponseTypes.COMPLEX_REASONING: 4, ResponseTypes.CONVERSATION: 2,
-                   ResponseTypes.DETAIL_DESCRIPTION: 3, ResponseTypes.COMPLEX_REASONING_PRUNING: 1}
+                   ResponseTypes.DETAIL_DESCRIPTION: 3, ResponseTypes.COMPLEX_REASONING_PRUNING: 5}
 
 
 class TextGenerator():
@@ -89,19 +91,20 @@ class TextGenerator():
         for i in range(5):
             output = self.http_query_api({
                 "inputs": query_message,
-                "parameters": {"return_full_text": False, "temperature": 0.7, "max_new_tokens": 50},
+                "parameters": {"return_full_text": False, "temperature": 0.8, "max_new_tokens": 50},
                 "options": {"use_cache": False}
             })[0]['generated_text']
 
             print(output)
 
             qa = parse_responses.parse_conversation(output)
-            if len(qa) > 0:
+            if qa is not None or len(qa) > 0:
                 potential_questions.append(qa[0]['Question'])
 
         # TODO: ensure there is at least 1 question generated and parsed
         query_questions = [f"{i}. {question}" for i, question in enumerate(potential_questions,1)]
-        query2 = query + '\n\n' + '\n'.join(query_questions)
+        # query2 = query + '\n\n' + '\n'.join(query_questions)
+        query2 = '\n'.join(query_questions)
 
         query2_message = self.tokenizer.apply_chat_template(
             self.base_messages[ResponseTypes.COMPLEX_REASONING_PRUNING] + [{"role": "user", "content": query2}],
@@ -119,6 +122,8 @@ class TextGenerator():
             print(f'failed w range: {output}')
             return None
 
+        print(output.details.tokens[0].logprob)
+        print(math.exp(output.details.tokens[0].logprob))
 
         output = self.client.text_generation(query_message+' Question:\n'+potential_questions[best_question_num], max_new_tokens=self.max_new_tokens, details=True)
 

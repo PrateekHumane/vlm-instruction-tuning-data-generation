@@ -1,0 +1,97 @@
+What is the man riding on?
+What does this image represent?
+What challenges might this person face while riding the motorcycle on this dirt road?
+What is the context of this image?
+What is the significance of this image?
+
+3
+1 w 0.29
+
+What is the purpose of the woman wearing a net on her head while cutting the cake?
+What is the context of this image, and what is the woman doing?
+What is the woman doing in the image?
+What is the woman cutting?
+What is the context behind this image?
+
+1
+1 w 0.29
+
+What is unique about this image?
+What factors could cause someone to stand barefoot while interacting with livestock?
+What cultural or historical significance might these animals and objects have in this image?
+What is unusual or interesting about this image?
+What is the context of these images?
+
+3
+1 w 0.24
+
+What is the young boy doing in the image?
+What activity is the young boy engaged in?
+What is the boy doing in this image?
+What might be happening in this image?
+What might the young boy be learning or researching in front of the computer?
+
+5
+3 w .36
+
+What activities are these people engaged in?
+What might be happening in the image?
+What is the activity depicted in the image?
+What is the context of these images?
+What is the context of these images?
+
+1
+1 w .29
+
+What information is revealed by the placement of objects in this kitchen?
+What is the context of this image?
+What is happening in this image?
+What activities are taking place in this room?
+What is happening in this scene?
+
+1
+1 w 0.38
+
+-0.9604492
+0.3827209291151342
+{'image_id': 574769, 'complex_reasoning': [{'Question': 'What information is revealed by the placement of objects in this kitchen?', 'Answer': "The placement of objects in the kitchen reveals several details about the scene. The woman holding a cat is standing near the refrigerator, which suggests that she might be preparing food or drinks for herself or others. The potted plant and orange fruits on the counter indicate that the woman is likely cooking or baking, as these items are commonly used in such activities. The handbag on the floor suggests that the woman is preparing for an outing or a trip. The clock on the wall indicates that it is a specific time of day, which could be relevant to the woman's plans or schedule. The bottle and spoon on the counter suggest that the woman is preparing a drink or a meal, possibly for herself or others. The oven and sink are also present, indicating that the woman may be cooking or baking something in the oven and washing dishes in the sink. Overall, the placement of objects in the kitchen provides insight into the woman's activities and plans, as well as her lifestyle and preferences."}]}
+
+What is the girl doing and what object is in front of her?
+What is happening in this image?
+What is the situation depicted in the image?
+What is this person's action about to be?
+What is this girl doing, and what is the significance of this action?
+
+4
+2 w .46
+
+What information can be gathered about the kitchen in the image?
+What is happening in this kitchen setting?
+What is the context of this kitchen?
+What is the purpose of the kitchen in the image?
+What kitchen appliances can be seen in the image?
+
+1
+1 w 0.30
+
+What culinary skills might the two men possess?
+What is the purpose of the commercial kitchen in this image?
+What is being prepared in the commercial kitchen?
+What is happening in this commercial kitchen?
+What is being prepared in this commercial-style kitchen?
+
+1
+1 w 0.24
+
+
+What is the setting of this photo?
+What are the chefs preparing?
+What is the context of these two people in the restaurant kitchen?
+What equipment do these chefs use to prepare the food in the restaurant kitchen?
+What are the chefs working on?
+===
+Answer:
+In the image, two chefs are standing in a kitchen, preparing food. They are working near the stove, cooking a variety of dishes using pans and
+-1.2275391
+0.29301276627787654
+{'image_id': 222564, 'complex_reasoning': [{'Question': 'What is the setting of this photo?', 'An

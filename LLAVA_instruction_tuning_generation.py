@@ -26,7 +26,7 @@ text_generator = TextGenerator(model=Models.MISTRAL, api_type=APITypes.INFERENCE
 # response_types = [ResponseTypes.COMPLEX_REASONING, ResponseTypes.CONVERSATION, ResponseTypes.DETAIL_DESCRIPTION ]
 response_types = [ResponseTypes.COMPLEX_REASONING]
 
-image_ids = [215677, 296754]
+image_ids = [215677, 296754, 543038, 63912, 255330, 77662, 248471, 181305, 191101, 428446, 17105, 107331]
 for image_id in image_ids:
     img_info = coco_instances.loadImgs(image_id)[0]
     img_width = img_info['width']
