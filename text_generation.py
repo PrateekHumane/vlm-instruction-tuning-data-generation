@@ -32,7 +32,7 @@ class ResponseTypes(Enum):
 
 # get the corresponding number of samples for the given response type
 response_n_shot = {ResponseTypes.COMPLEX_REASONING: 4, ResponseTypes.CONVERSATION: 2,
-                   ResponseTypes.DETAIL_DESCRIPTION: 3, ResponseTypes.COMPLEX_REASONING_PRUNING: 5}
+                   ResponseTypes.DETAIL_DESCRIPTION: 3, ResponseTypes.COMPLEX_REASONING_PRUNING: 4}
 
 
 class TextGenerator():
@@ -82,29 +82,32 @@ class TextGenerator():
 
         return output.generated_text, output.details.finish_reason
 
-    def generate_complex_reasoning_pruned(self, query):
+    def generate_complex_reasoning_pruned(self, captions, bboxs):
+
         query_message = self.tokenizer.apply_chat_template(
-            self.base_messages[ResponseTypes.COMPLEX_REASONING] + [{"role": "user", "content": query}],
+            self.base_messages[ResponseTypes.COMPLEX_REASONING] + [{"role": "user", "content": captions + '\n\n' + bboxs}],
             tokenize=False)
 
         potential_questions = []
-        for i in range(5):
+        for i in range(10):
             output = self.http_query_api({
                 "inputs": query_message,
-                "parameters": {"return_full_text": False, "temperature": 0.8, "max_new_tokens": 50},
+                "parameters": {"return_full_text": False, "temperature": 0.75, "max_new_tokens": 50},
                 "options": {"use_cache": False}
-            })[0]['generated_text']
+            })
 
             print(output)
 
+            output = output[0]['generated_text']
+
             qa = parse_responses.parse_conversation(output)
-            if qa is not None or len(qa) > 0:
+            if qa is not None and len(qa) > 0:
                 potential_questions.append(qa[0]['Question'])
 
         # TODO: ensure there is at least 1 question generated and parsed
         query_questions = [f"{i}. {question}" for i, question in enumerate(potential_questions,1)]
-        # query2 = query + '\n\n' + '\n'.join(query_questions)
-        query2 = '\n'.join(query_questions)
+        query2 = captions + '\n\n' + '\n'.join(query_questions)
+        # query2 = '\n'.join(query_questions)
 
         query2_message = self.tokenizer.apply_chat_template(
             self.base_messages[ResponseTypes.COMPLEX_REASONING_PRUNING] + [{"role": "user", "content": query2}],

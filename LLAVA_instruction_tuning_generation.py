@@ -21,12 +21,12 @@ num_images = len(image_ids)
 cats = coco_instances.loadCats(coco_instances.getCatIds())
 cat_id_2_name = {cat['id']: cat['name'] for cat in cats}
 
-text_generator = TextGenerator(model=Models.MISTRAL, api_type=APITypes.INFERENCE_API)
+text_generator = TextGenerator(model=Models.MISTRAL, api_type=APITypes.INFERENCE_API, max_new_tokens=750)
 
 # response_types = [ResponseTypes.COMPLEX_REASONING, ResponseTypes.CONVERSATION, ResponseTypes.DETAIL_DESCRIPTION ]
-response_types = [ResponseTypes.COMPLEX_REASONING]
+response_types = [ResponseTypes.CONVERSATION]
 
-image_ids = [215677, 296754, 543038, 63912, 255330, 77662, 248471, 181305, 191101, 428446, 17105, 107331]
+image_ids = [33471, 52846, 334872, 319154, 398214]
 for image_id in image_ids:
     img_info = coco_instances.loadImgs(image_id)[0]
     img_width = img_info['width']
@@ -61,8 +61,8 @@ for image_id in image_ids:
         else:
             query = captions + '\n\n' + bboxs
 
-        # generated_text, finish_reason = text_generator.generate(query, response_type)
-        generated_text, finish_reason = text_generator.generate_complex_reasoning_pruned(query)
+        generated_text, finish_reason = text_generator.generate(query, response_type)
+        # generated_text, finish_reason = text_generator.generate_complex_reasoning_pruned(captions, bboxs)
 
         with open(f"datasets/Mistral/raw/{response_type.value}.json", "a") as jf:
             json.dump({image_id: generated_text}, jf, indent=2)
