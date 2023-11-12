@@ -24,9 +24,9 @@ cat_id_2_name = {cat['id']: cat['name'] for cat in cats}
 text_generator = TextGenerator(model=Models.MISTRAL, api_type=APITypes.INFERENCE_API, max_new_tokens=750)
 
 # response_types = [ResponseTypes.COMPLEX_REASONING, ResponseTypes.CONVERSATION, ResponseTypes.DETAIL_DESCRIPTION ]
-response_types = [ResponseTypes.CONVERSATION]
+response_types = [ResponseTypes.DETAIL_DESCRIPTION]
 
-image_ids = [33471, 52846, 334872, 319154, 398214]
+image_ids = [442786, 539056, 131697, 281721]
 for image_id in image_ids:
     img_info = coco_instances.loadImgs(image_id)[0]
     img_width = img_info['width']
