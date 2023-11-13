@@ -5,11 +5,12 @@ import re
 from tqdm import tqdm
 
 
-# TODO: change to gpu for prod
-device = "cpu"
-
+# using gpu (I believe this doesn't split across gpus so use below if you need to parallelize across multiple)
+device = "cuda"
 model = AutoModelForCausalLM.from_pretrained("mistralai/Mistral-7B-Instruct-v0.1")
 model.to(device)
+# Alternatively split load across hardware instead using:
+# model = AutoModelForCausalLM.from_pretrained("mistralai/Mistral-7B-Instruct-v0.1", device_map = 'auto')
 
 tokenizer = AutoTokenizer.from_pretrained("mistralai/Mistral-7B-Instruct-v0.1")
 tokenizer.padding_side = "left"
@@ -21,38 +22,17 @@ class ResponseTypes(Enum):
     DETAIL_DESCRIPTION = 'detail_description'
     COMPLEX_REASONING_PRUNING = 'complex_reasoning_pruning'
 
-def cut_off_eos(text):
-    eos_index = text.find("</s>")
-    # check to make sure that finish reason is end of string token
-    if eos_index == -1:
-        raise ValueError("Max tokens generated")
-    return text[:eos_index]
-
-
-def parse_conversation(conv_raw):
-    question_or_answers = re.split(r'\n===\n', conv_raw.strip())
-    qa_pairs = []
-    for q, a in zip(question_or_answers[0::2], question_or_answers[1::2]):
-        if not q.startswith('Question:\n') or not a.startswith('Answer:\n'):
-            raise ValueError("Conversation ill-formed")
-        qa_pairs.append({'Question': q[10:], 'Answer': a[8:]})
-
-    if len(qa_pairs) == 0:
-        raise ValueError("Conversation ill-formed")
-    return qa_pairs
-
-
 BATCH_SIZE = 2
 response_types_to_generate = [ResponseTypes.CONVERSATION]
 max_new_tokens = 750
 
 for response_type in response_types_to_generate:
-    with open(f"datasets/Mistral/prompts/{response_type.value}.json","r") as f:
+    with open(f"prompts/{response_type.value}.json","r") as f:
         queries = json.load(f)
 
     print(f'loaded {response_type.value} queries')
 
-    all_parsed_responses = []
+    all_responses = []
     for i in tqdm(range(0, len(queries), BATCH_SIZE)):
         # gather batch from queries
         batch = queries[i:i + BATCH_SIZE]
@@ -72,12 +52,12 @@ for response_type in response_types_to_generate:
 
         for i,response_text in enumerate(response_texts):
             response_object = {'image_id': batch[i]['image_id'], 'response': response_text}
-            all_parsed_responses.append(response_object)
+            all_responses.append(response_object)
 
-            # update a json newline file so that no generated data is not lost on crash or program fail
-            with open(f"datasets/Mistral/log/{response_type.value}.json", "a") as jf:
+            # update a json newline file so that no generated data is lost on crash or program fail
+            with open(f"log/{response_type.value}.json", "a") as jf:
                 json.dump(response_object, jf, indent=2)
                 jf.write(',\n')
 
-    with open(f"datasets/Mistral/dataset/{response_type.value}.json", "w") as jf:
-        json.dump(all_parsed_responses, jf)
+    with open(f"dataset/{response_type.value}.json", "w") as jf:
+        json.dump(all_responses, jf)

@@ -5,11 +5,12 @@ import re
 from tqdm import tqdm
 
 
-# TODO: change to gpu for prod
-device = "cpu"
-
+# using gpu (I believe this doesn't split across gpus so use below if you need to parallelize across multiple)
+device = "cuda"
 model = AutoModelForCausalLM.from_pretrained("mistralai/Mistral-7B-Instruct-v0.1")
 model.to(device)
+# Alternatively split load across hardware instead using:
+# model = AutoModelForCausalLM.from_pretrained("mistralai/Mistral-7B-Instruct-v0.1", device_map = 'auto')
 
 tokenizer = AutoTokenizer.from_pretrained("mistralai/Mistral-7B-Instruct-v0.1")
 tokenizer.padding_side = "left"
@@ -43,11 +44,11 @@ def parse_conversation(conv_raw):
 
 
 BATCH_SIZE = 2
-response_types_to_generate = [ResponseTypes.CONVERSATION]
+response_types_to_generate = [ResponseTypes.COMPLEX_REASONING,ResponseTypes.CONVERSATION,ResponseTypes.DETAIL_DESCRIPTION]
 max_new_tokens = 750
 
 for response_type in response_types_to_generate:
-    with open(f"datasets/Mistral/prompts/{response_type.value}.json","r") as f:
+    with open(f"prompts/{response_type.value}.json","r") as f:
         queries = json.load(f)
 
     print(f'loaded {response_type.value} queries')
@@ -83,16 +84,16 @@ for response_type in response_types_to_generate:
                 response_object = {'image_id':batch[i]['image_id'], 'response':parsed_response}
                 all_parsed_responses.append(response_object)
 
-                # update a json newline file so that no generated data is not lost on crash or program fail
-                with open(f"datasets/Mistral/log/{response_type.value}.json", "a") as jf:
+            # update a json newline file so that no generated data is lost on crash or program fail
+                with open(f"log/{response_type.value}.json", "a") as jf:
                     json.dump(response_object, jf, indent=2)
                     jf.write(',\n')
 
             except ValueError as e:
                 # print error message to an error log json
-                with open(f"datasets/Mistral/error_log.json", "a") as ef:
+                with open(f"error_log.json", "a") as ef:
                     json.dump({'image_id': batch[i]['image_id'], 'text': response_text, 'error': str(e)}, ef, indent=2)
                     ef.write(',\n')
 
-    with open(f"datasets/Mistral/dataset/{response_type.value}.json", "w") as jf:
+    with open(f"dataset/{response_type.value}.json", "w") as jf:
         json.dump(all_parsed_responses, jf)
