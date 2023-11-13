@@ -73,8 +73,14 @@ class TextGenerator():
         response = requests.post(api_url, headers={"Authorization": f"Bearer {self.model_token}"}, json=payload)
         return response.json()
 
-    def generate(self, query, response_type):
+    def apply_chat_template(self, query, response_type):
 
+        query_message = self.tokenizer.apply_chat_template(
+            self.base_messages[response_type] + [{"role": "user", "content": query}], tokenize=False)
+
+        return query_message
+
+    def generate(self, query, response_type):
         query_message = self.tokenizer.apply_chat_template(
             self.base_messages[response_type] + [{"role": "user", "content": query}], tokenize=False)
 
@@ -83,9 +89,9 @@ class TextGenerator():
         return output.generated_text, output.details.finish_reason
 
     def generate_complex_reasoning_pruned(self, captions, bboxs):
-
         query_message = self.tokenizer.apply_chat_template(
-            self.base_messages[ResponseTypes.COMPLEX_REASONING] + [{"role": "user", "content": captions + '\n\n' + bboxs}],
+            self.base_messages[ResponseTypes.COMPLEX_REASONING] + [
+                {"role": "user", "content": captions + '\n\n' + bboxs}],
             tokenize=False)
 
         potential_questions = []
@@ -105,7 +111,7 @@ class TextGenerator():
                 potential_questions.append(qa[0]['Question'])
 
         # TODO: ensure there is at least 1 question generated and parsed
-        query_questions = [f"{i}. {question}" for i, question in enumerate(potential_questions,1)]
+        query_questions = [f"{i}. {question}" for i, question in enumerate(potential_questions, 1)]
         query2 = captions + '\n\n' + '\n'.join(query_questions)
         # query2 = '\n'.join(query_questions)
 
@@ -128,6 +134,8 @@ class TextGenerator():
         print(output.details.tokens[0].logprob)
         print(math.exp(output.details.tokens[0].logprob))
 
-        output = self.client.text_generation(query_message+' Question:\n'+potential_questions[best_question_num], max_new_tokens=self.max_new_tokens, details=True)
+        output = self.client.text_generation(query_message + ' Question:\n' + potential_questions[best_question_num],
+                                             max_new_tokens=self.max_new_tokens, details=True)
 
-        return 'Question:\n'+potential_questions[best_question_num]+output.generated_text, output.details.finish_reason
+        return 'Question:\n' + potential_questions[
+            best_question_num] + output.generated_text, output.details.finish_reason
